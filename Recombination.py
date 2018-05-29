@@ -7,7 +7,7 @@ import sys
 #Helper functions:
 
 def H(a):
-	return (H0/(3.085678*10**19))*sqrt( (omega_b+omega_m)*a**(-3) + omega_r*a**(-4) + omega_lambda ) #Dimensions: ?
+	return (H0/(3.085678*10**19)) * sqrt( (omega_b+omega_m)*a**(-3) + omega_r*a**(-4) + omega_lambda ) #Dimensions: ?
 
 def n_b(a):
 	ro_c = 3*( (H0/(3.085678*10**19)) **2) / (8*pi*G)
@@ -21,17 +21,16 @@ def SahaEquation(a):
 	return 0.5 * (-coefficient + sqrt(coefficient**2 + 4*coefficient)) #Dimensionless
 
 def phi2(a):
-	return 0.448*np.log(epsilon_0/kBoltzmann*T_b(a)) #Dimensionless
+	if T_b(a) > 6000:
+		return 0
+	else:
+		return 0.448*np.log(epsilon_0/kBoltzmann*T_b(a)) #Dimensionless
 
 def alpha2(a):
-	#return 64*pi/sqrt(27*pi) * (alphaFina**2 * h2**2 * c**2)/(m_e**2 * c**3) * sqrt(epsilon_0/(kBoltzmann*T_b(a))) * phi2(a)
-	return 64*pi/sqrt(27*pi) * (alphaFina**2 * h2**2 * c**1)/(m_e**2 * c**3) * sqrt(epsilon_0/(kBoltzmann*T_b(a))) * phi2(a)
-	#return 0.00000000000030*64*pi/sqrt(27*pi) * (alphaFina**2 * h2**2 * c**2)/(m_e**2 * c**3) * sqrt(epsilon_0/(kBoltzmann*T_b(a))) * phi2(a)
-	#return 64*pi/sqrt(27*pi) * ((e**4)/(m_e**2 * c**3)) * sqrt(epsilon_0/(kBoltzmann*T_b(a))) * phi2(a) #Dimensionless
+	return 64*pi/sqrt(27*pi) * (alphaFina**2 * h2**2)/(m_e**2 * c) * sqrt(epsilon_0/(kBoltzmann*T_b(a))) * phi2(a)
 
 def beta(a):
-	#Qué constante de Planck usar?
-	return (m_e*kBoltzmannSI*T_b(a)/(2*pi*h2**2))**1.5 * exp(-epsilon_0/(kBoltzmann*T_b(a))) * alpha2(a) #Dimensions: ?
+	return (m_e*kBoltzmannSI*T_b(a) / (2*pi*h2**2))**1.5 * exp(-epsilon_0/(kBoltzmann*T_b(a))) * alpha2(a) #Dimensions: ?
 
 def beta2(a):
 	return beta(a) * exp(3*epsilon_0/(4*kBoltzmann*T_b(a))) #Dimensions: ?
@@ -47,9 +46,8 @@ def C_r(Xe, a):
 	return (Lambda21 + LambdaAlpha(Xe, a)) / (Lambda21 + LambdaAlpha(Xe, a) + beta2(a)) #Dimensionless
 
 def XeDerivative(Xe, a):
-	return 1/a * (C_r(Xe, a)/H(a)) * (beta(a) * (1 - Xe) - n_b(a)*alpha2(a)*Xe**2) #Dimensionless
+	return C_r(Xe, a)/(a*H(a)) * (beta(a) * (1 - Xe) - n_b(a)*alpha2(a)*Xe**2) #Dimensionless
 
-rungeKuttaCoefficient = 1.0/6.0
 def rungeKutta4(x, derivX, deltat=0.1, **kwargs):
 	"""
 		Runge-Kutta 4th order numerical ODE, FIXED STEPSIZE.
@@ -62,7 +60,7 @@ def rungeKutta4(x, derivX, deltat=0.1, **kwargs):
 	k2 = derivX(x + 0.5*k1, **kwargs)*deltat
 	k3 = derivX(x + 0.5*k2, **kwargs)*deltat
 	k4 = derivX(x + k3, **kwargs)*deltat
-	return x + rungeKuttaCoefficient*(k1+2*k2+2*k3+k4)
+	return x + (k1+2*k2+2*k3+k4)/6.0
 
 #Main program:
 
@@ -116,7 +114,7 @@ for i in range(1,len(z2)):
 	XeDerivativeGrid[i] = XeDerivative(Xe, current_a)
 
 	print("z = " + str(z2[i]), ", Xe = " + str(XeGrid[i]))
-	print("XeDerivative = " + str(XeDerivative(Xe, current_a)))
+	#print("XeDerivative = " + str(XeDerivative(Xe, current_a)))
 
 
 
